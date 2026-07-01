@@ -359,8 +359,17 @@ function pick(matchId, side) {
 }
 
 async function savePicks() {
+  const data = JSON.stringify(picks);
   try {
-    await window.storage.set("picks", JSON.stringify(picks), false);
+    if (window.storage) {
+      await window.storage.set("picks", data, false);
+      return;
+    }
+  } catch (err) {
+    console.error("window.storage no disponible, se usará localStorage:", err);
+  }
+  try {
+    localStorage.setItem("wc2026-picks", data);
   } catch (err) {
     console.error("No se pudieron guardar los avances:", err);
   }
@@ -546,12 +555,22 @@ window.addEventListener("resize", () => requestAnimationFrame(drawConnectors));
 
 async function init() {
   try {
-    const result = await window.storage.get("picks", false);
-    if (result && result.value) {
-      Object.assign(picks, JSON.parse(result.value));
+    if (window.storage) {
+      const result = await window.storage.get("picks", false);
+      if (result && result.value) {
+        Object.assign(picks, JSON.parse(result.value));
+      }
+      render();
+      return;
     }
   } catch (err) {
-    // no hay avances guardados todavía
+    // no hay avances guardados todavía en window.storage
+  }
+  try {
+    const raw = localStorage.getItem("wc2026-picks");
+    if (raw) Object.assign(picks, JSON.parse(raw));
+  } catch (err) {
+    // no hay avances guardados todavía en localStorage
   }
   render();
 }
