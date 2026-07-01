@@ -354,7 +354,16 @@ function pick(matchId, side) {
     const rr = Number(k.split("-")[0]);
     if (rr > round) delete picks[k];
   });
+  savePicks();
   render();
+}
+
+async function savePicks() {
+  try {
+    await window.storage.set("picks", JSON.stringify(picks), false);
+  } catch (err) {
+    console.error("No se pudieron guardar los avances:", err);
+  }
 }
 
 function teamRowHTML(team, isWinner, scoreVal, penVal, matchId, side, clickable) {
@@ -535,7 +544,19 @@ function drawConnectors() {
 
 window.addEventListener("resize", () => requestAnimationFrame(drawConnectors));
 
-render();
+async function init() {
+  try {
+    const result = await window.storage.get("picks", false);
+    if (result && result.value) {
+      Object.assign(picks, JSON.parse(result.value));
+    }
+  } catch (err) {
+    // no hay avances guardados todavía
+  }
+  render();
+}
+
+init();
 </script>
 </body>
 </html>
